@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"crypto/tls"
 	"flag"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 
@@ -18,6 +20,7 @@ var (
 	protocol      = flag.String("proto", "http", "The protocol used by the site behind CF")
 	domain        = flag.String("domain", "example.com", "Domain target")
 	subnet        = flag.String("subnet", "192.168.0.1/24", "Subnet to scan")
+	ipfile        = flag.String("ipfile", "/home/mggk/dev/behindflare/ips.txt", "File containing IP Ranges")
 	OriginalTitle string
 	limit         = flag.Int("jobs", 20, "Number of parallel jobs")
 )
@@ -31,9 +34,9 @@ func main() {
 
 	siteInfo()
 
-	ipAddresses2, err := Hosts(*subnet)
+	ipAddresses2, err := generateIPAddresses()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error in ip parsing")
 	}
 
 	color.Cyan("Number of IPs to scan: %v", len(ipAddresses2))
@@ -177,4 +180,45 @@ func inc(ip net.IP) {
 			break
 		}
 	}
+}
+
+func generateIPAddresses() ([]string, error) {
+	if *ipfile != "" {
+		ipAddresses2, err := generateAdressesFromFile(*ipfile)
+		if err != nil {
+			log.Fatal("Error in ip file parsing")
+		}
+		return ipAddresses2, nil
+	} else {
+		ipAddresses2, err := Hosts(*subnet)
+		if err != nil {
+			log.Fatal("Error in ip parsing")
+		}
+		return ipAddresses2, nil
+	}
+}
+
+func generateAdressesFromFile(fileLocation string) ([]string, error) {
+	var finalIps []string
+	file, err := os.Open(fileLocation)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		println(scanner.Text())
+		parsedIp, err := Hosts(scanner.Text())
+		if err != nil {
+			log.Fatal(err)
+		}
+		finalIps = append(finalIps, parsedIp...)
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return finalIps, nil
 }
