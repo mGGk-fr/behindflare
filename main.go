@@ -20,7 +20,7 @@ var (
 	protocol      = flag.String("proto", "http", "The protocol used by the site behind CF")
 	domain        = flag.String("domain", "example.com", "Domain target")
 	subnet        = flag.String("subnet", "192.168.0.1/24", "Subnet to scan")
-	ipfile        = flag.String("ipfile", "/home/mggk/dev/behindflare/ips.txt", "File containing IP Ranges")
+	ipfile        = flag.String("ipfile", "", "File containing IP Ranges")
 	OriginalTitle string
 	limit         = flag.Int("jobs", 20, "Number of parallel jobs")
 )
